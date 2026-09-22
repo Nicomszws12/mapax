@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Mapa Bogotá</string>
+    <string name="title_activity_main">Mapa Bogotá</string>
+    <string name="package_name">com.nicolasnieto.mapabogota</string>
+    <string name="custom_url_scheme">com.nicolasnieto.mapabogota</string>
+</resources>

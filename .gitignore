@@ -30,3 +30,16 @@ npm-debug.log*
 /platforms
 /plugins
 /www
+
+# Android build artifacts
+android/app/build/
+android/.gradle/
+android/build/
+android/capacitor-cordova-android-plugins/build/
+android/capacitor-app/build/
+android/capacitor-geolocation/build/
+android/capacitor-haptics/build/
+android/capacitor-keyboard/build/
+android/capacitor-status-bar/build/
+local.properties
+
