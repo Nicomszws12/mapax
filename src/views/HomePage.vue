@@ -17,26 +17,72 @@
     <ion-content :fullscreen="true">
       <div id="map"></div>
 
-      <!-- FAB para centrar en ubicación -->
+      <!-- FAB botones -->
       <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+        <ion-fab-button @click="activarModoAgregar" :color="modoAgregar ? 'danger' : 'primary'" size="small">
+          <ion-icon :icon="modoAgregar ? closeOutline : addOutline" />
+        </ion-fab-button>
+      </ion-fab>
+
+      <ion-fab vertical="bottom" horizontal="start" slot="fixed">
         <ion-fab-button @click="centrarEnUsuario" color="dark" size="small">
           <ion-icon :icon="navigateOutline" />
         </ion-fab-button>
       </ion-fab>
+
+      <!-- Banner modo agregar -->
+      <div v-if="modoAgregar" class="modo-agregar-banner">
+        <ion-icon :icon="fingerPrintOutline" />
+        <span>Toca en el mapa para ubicar tu nuevo sitio</span>
+      </div>
+
+      <!-- Marcador temporal -->
+      <div v-if="modoAgregar && puntoTemporal" class="confirmar-punto-banner">
+        <span>📍 Ubicación seleccionada</span>
+        <ion-button size="small" @click="abrirFormulario" color="success">
+          Continuar
+        </ion-button>
+      </div>
     </ion-content>
+
+    <!-- Modal agregar sitio -->
+    <AgregarSitioModal
+      :is-open="mostrarModalAgregar"
+      :lat="puntoTemporal?.lat ?? null"
+      :lng="puntoTemporal?.lng ?? null"
+      @cerrar="cerrarModalAgregar"
+      @guardar="guardarNuevoSitio"
+    />
+
+    <!-- Modal galería fotos -->
+    <GaleriaFotosModal
+      :is-open="mostrarGaleria"
+      :nombre="galeriaData.nombre"
+      :descripcion="galeriaData.descripcion"
+      :tipo="galeriaData.tipo"
+      :fotos="galeriaData.fotos"
+      @cerrar="mostrarGaleria = false"
+    />
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, reactive } from 'vue';
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
   IonButton, IonButtons, IonIcon, IonFab, IonFabButton
 } from '@ionic/vue';
-import { settingsOutline, locateOutline, navigateOutline } from 'ionicons/icons';
+import {
+  settingsOutline, locateOutline, navigateOutline,
+  addOutline, closeOutline, fingerPrintOutline
+} from 'ionicons/icons';
 import { Geolocation } from '@capacitor/geolocation';
+import { Preferences } from '@capacitor/preferences';
 import * as L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+
+import AgregarSitioModal from '../components/AgregarSitioModal.vue';
+import GaleriaFotosModal from '../components/GaleriaFotosModal.vue';
 
 // ── Tipos ──────────────────────────────────────────────
 type TipoPunto = 'cafeteria' | 'biblioteca' | 'bano' | 'parque' | 'hospital'
@@ -50,7 +96,18 @@ interface PuntoInteres {
   descripcion?: string;
 }
 
-// ── 22 Puntos de Interés en Bogotá ────────────────────
+interface SitioPersonalizado {
+  id: string;
+  nombre: string;
+  tipo: string;
+  descripcion: string;
+  lat: number;
+  lng: number;
+  fotos: string[];
+  fechaCreacion: string;
+}
+
+// ── 22 Puntos Predeterminados ─────────────────────────
 const PUNTOS: PuntoInteres[] = [
   { nombre: 'Cafetería Central', tipo: 'cafeteria', lat: 4.6016861, lng: -74.0644734, descripcion: 'Café y snacks variados' },
   { nombre: 'Juan Valdez Parque 93', tipo: 'cafeteria', lat: 4.6765, lng: -74.0482, descripcion: 'Café colombiano premium' },
@@ -76,7 +133,7 @@ const PUNTOS: PuntoInteres[] = [
   { nombre: 'Smart Fit Chapinero', tipo: 'gimnasio', lat: 4.6400, lng: -74.0630, descripcion: 'Gimnasio accesible 24/7' },
 ];
 
-// ── Iconos SVG por tipo ────────────────────────────────
+// ── Iconos ─────────────────────────────────────────────
 const crearIcono = (archivo: string, tamaño: [number, number] = [32, 32]): L.Icon =>
   L.icon({
     iconUrl: `/assets/icon/${archivo}`,
@@ -87,41 +144,68 @@ const crearIcono = (archivo: string, tamaño: [number, number] = [32, 32]): L.Ic
 
 const iconoUsuario = crearIcono('marker.svg', [30, 40]);
 
-const iconosPorTipo: Record<TipoPunto, L.Icon> = {
-  cafeteria:    crearIcono('cafe.svg'),
-  biblioteca:   crearIcono('book.svg'),
-  bano:         crearIcono('bano.svg'),
-  parque:       crearIcono('parque.svg'),
-  hospital:     crearIcono('hospital.svg'),
-  tienda:       crearIcono('tienda.svg'),
-  restaurante:  crearIcono('restaurante.svg'),
-  iglesia:      crearIcono('iglesia.svg'),
-  museo:        crearIcono('museo.svg'),
-  universidad:  crearIcono('universidad.svg'),
-  gimnasio:     crearIcono('gimnasio.svg'),
+const iconosPorTipo: Record<string, L.Icon> = {
+  cafeteria: crearIcono('cafe.svg'), biblioteca: crearIcono('book.svg'),
+  bano: crearIcono('bano.svg'), parque: crearIcono('parque.svg'),
+  hospital: crearIcono('hospital.svg'), tienda: crearIcono('tienda.svg'),
+  restaurante: crearIcono('restaurante.svg'), iglesia: crearIcono('iglesia.svg'),
+  museo: crearIcono('museo.svg'), universidad: crearIcono('universidad.svg'),
+  gimnasio: crearIcono('gimnasio.svg'),
 };
 
-const etiquetasTipo: Record<TipoPunto, string> = {
-  cafeteria:   '☕ Cafetería',
-  biblioteca:  '📚 Biblioteca',
-  bano:        '🚻 Baño',
-  parque:      '🌳 Parque',
-  hospital:    '🏥 Hospital',
-  tienda:      '🛍️ Tienda',
-  restaurante: '🍽️ Restaurante',
-  iglesia:     '⛪ Iglesia',
-  museo:       '🏛️ Museo',
-  universidad: '🎓 Universidad',
-  gimnasio:    '💪 Gimnasio',
+const etiquetasTipo: Record<string, string> = {
+  cafeteria: '☕ Cafetería', biblioteca: '📚 Biblioteca', bano: '🚻 Baño',
+  parque: '🌳 Parque', hospital: '🏥 Hospital', tienda: '🛍️ Tienda',
+  restaurante: '🍽️ Restaurante', iglesia: '⛪ Iglesia', museo: '🏛️ Museo',
+  universidad: '🎓 Universidad', gimnasio: '💪 Gimnasio',
 };
 
 // ── Estado ─────────────────────────────────────────────
 let map: L.Map;
-let ubicacionUsuario = ref<{ lat: number; lng: number } | null>(null);
+const ubicacionUsuario = ref<{ lat: number; lng: number } | null>(null);
 let marcadorUsuario: L.Marker | undefined;
 let circuloPrecision: L.Circle | undefined;
 let rutaActual: L.Polyline | undefined;
-let watchId: string | undefined;
+let marcadorTemporal: L.Marker | undefined;
+const marcadoresPersonalizados: L.Marker[] = [];
+
+const modoAgregar = ref(false);
+const puntoTemporal = ref<{ lat: number; lng: number } | null>(null);
+const mostrarModalAgregar = ref(false);
+const sitiosPersonalizados = ref<SitioPersonalizado[]>([]);
+
+// Galería
+const mostrarGaleria = ref(false);
+const galeriaData = reactive({
+  nombre: '',
+  descripcion: '',
+  tipo: '',
+  fotos: [] as string[],
+});
+
+// ── Persistencia ───────────────────────────────────────
+
+async function cargarSitiosGuardados() {
+  try {
+    const { value } = await Preferences.get({ key: 'sitios_personalizados' });
+    if (value) {
+      sitiosPersonalizados.value = JSON.parse(value);
+    }
+  } catch (err) {
+    console.error('Error cargando sitios:', err);
+  }
+}
+
+async function guardarSitiosEnStorage() {
+  try {
+    await Preferences.set({
+      key: 'sitios_personalizados',
+      value: JSON.stringify(sitiosPersonalizados.value),
+    });
+  } catch (err) {
+    console.error('Error guardando sitios:', err);
+  }
+}
 
 // ── Funciones de Utilidad ──────────────────────────────
 
@@ -136,46 +220,40 @@ function calcularDistancia(lat1: number, lng1: number, lat2: number, lng2: numbe
 }
 
 function formatearDistancia(metros: number): string {
-  return metros < 1000
-    ? `${metros.toFixed(0)} m`
-    : `${(metros / 1000).toFixed(2)} km`;
+  return metros < 1000 ? `${metros.toFixed(0)} m` : `${(metros / 1000).toFixed(2)} km`;
 }
 
-// ── Actualizar posición del usuario en tiempo real ─────
+function formatearTiempo(segundos: number): string {
+  const mins = Math.round(segundos / 60);
+  if (mins < 60) return `${mins} min`;
+  return `${Math.floor(mins / 60)}h ${mins % 60}min`;
+}
+
+// ── Ubicación del usuario ──────────────────────────────
 
 function actualizarPosicionUsuario(lat: number, lng: number, accuracy?: number) {
   ubicacionUsuario.value = { lat, lng };
-
   if (marcadorUsuario) {
     marcadorUsuario.setLatLng([lat, lng]);
   } else {
     marcadorUsuario = L.marker([lat, lng], { icon: iconoUsuario, zIndexOffset: 1000 })
-      .addTo(map)
-      .bindPopup('<strong>📍 Tu ubicación actual</strong>');
+      .addTo(map).bindPopup('<strong>📍 Tu ubicación actual</strong>');
   }
-
   if (accuracy && accuracy > 0) {
     if (circuloPrecision) {
-      circuloPrecision.setLatLng([lat, lng]);
-      circuloPrecision.setRadius(accuracy);
+      circuloPrecision.setLatLng([lat, lng]).setRadius(accuracy);
     } else {
       circuloPrecision = L.circle([lat, lng], {
-        radius: accuracy,
-        color: '#1a73e8',
-        fillColor: '#1a73e8',
-        fillOpacity: 0.1,
-        weight: 1,
+        radius: accuracy, color: '#1a73e8', fillColor: '#1a73e8', fillOpacity: 0.1, weight: 1,
       }).addTo(map);
     }
   }
 }
 
-// ── Centrar en la ubicación del usuario ─────────────────
-
 async function centrarEnUsuario() {
   try {
-    const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
-    const { latitude, longitude, accuracy } = position.coords;
+    const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
+    const { latitude, longitude, accuracy } = pos.coords;
     actualizarPosicionUsuario(latitude, longitude, accuracy ?? undefined);
     map.setView([latitude, longitude], 16, { animate: true });
   } catch (err) {
@@ -183,11 +261,9 @@ async function centrarEnUsuario() {
   }
 }
 
-// ── Iniciar seguimiento de ubicación en tiempo real ────
-
 async function iniciarSeguimiento() {
   try {
-    const id = await Geolocation.watchPosition(
+    await Geolocation.watchPosition(
       { enableHighAccuracy: true },
       (position, err) => {
         if (err || !position) return;
@@ -195,7 +271,6 @@ async function iniciarSeguimiento() {
         actualizarPosicionUsuario(latitude, longitude, accuracy ?? undefined);
       }
     );
-    watchId = id;
   } catch (err) {
     console.error('Error iniciando seguimiento:', err);
   }
@@ -203,64 +278,35 @@ async function iniciarSeguimiento() {
 
 // ── Rutas ──────────────────────────────────────────────
 
-async function obtenerRuta(
-  origenLat: number, origenLng: number,
-  destinoLat: number, destinoLng: number
-): Promise<{ coordenadas: L.LatLng[]; duracion: number; distancia: number }> {
-  const url = `https://router.project-osrm.org/route/v1/foot/${origenLng},${origenLat};${destinoLng},${destinoLat}?overview=full&geometries=geojson`;
-  const response = await fetch(url);
-  const data = await response.json();
-  if (!data.routes || data.routes.length === 0) throw new Error('No se encontró ruta');
-  const route = data.routes[0];
-  return {
-    coordenadas: route.geometry.coordinates.map(
-      (coord: [number, number]) => L.latLng(coord[1], coord[0])
-    ),
-    duracion: route.duration,
-    distancia: route.distance,
-  };
-}
-
-function formatearTiempo(segundos: number): string {
-  const mins = Math.round(segundos / 60);
-  if (mins < 60) return `${mins} min`;
-  const hrs = Math.floor(mins / 60);
-  const restMins = mins % 60;
-  return `${hrs}h ${restMins}min`;
-}
-
 async function trazarRuta(destinoLat: number, destinoLng: number, nombreDestino: string) {
   if (!ubicacionUsuario.value) return;
   try {
-    const { coordenadas, duracion, distancia } = await obtenerRuta(
-      ubicacionUsuario.value.lat, ubicacionUsuario.value.lng,
-      destinoLat, destinoLng
+    const url = `https://router.project-osrm.org/route/v1/foot/${ubicacionUsuario.value.lng},${ubicacionUsuario.value.lat};${destinoLng},${destinoLat}?overview=full&geometries=geojson`;
+    const response = await fetch(url);
+    const data = await response.json();
+    if (!data.routes?.length) throw new Error('No se encontró ruta');
+    const route = data.routes[0];
+    const coords = route.geometry.coordinates.map(
+      (c: [number, number]) => L.latLng(c[1], c[0])
     );
     if (rutaActual) map.removeLayer(rutaActual);
-    rutaActual = L.polyline(coordenadas, {
-      color: '#e91e63',
-      weight: 5,
-      opacity: 0.85,
-      dashArray: '10, 6',
-    }).addTo(map);
-
+    rutaActual = L.polyline(coords, { color: '#e91e63', weight: 5, opacity: 0.85, dashArray: '10, 6' }).addTo(map);
     rutaActual.bindPopup(`
       <div style="text-align:center;min-width:160px">
         <strong>Ruta a ${nombreDestino}</strong><br>
-        🚶 ${formatearTiempo(duracion)}<br>
-        📏 ${formatearDistancia(distancia)}
+        🚶 ${formatearTiempo(route.duration)}<br>
+        📏 ${formatearDistancia(route.distance)}
       </div>
     `).openPopup();
-
     map.fitBounds(rutaActual.getBounds(), { padding: [50, 50] });
   } catch (error) {
     console.error('Error trazando ruta:', error);
   }
 }
 
-// ── Agregar puntos de interés al mapa ──────────────────
+// ── Agregar puntos predeterminados ─────────────────────
 
-function agregarPuntos(refLat: number, refLng: number) {
+function agregarPuntosPredeterminados(refLat: number, refLng: number) {
   PUNTOS.forEach((p) => {
     const distancia = calcularDistancia(refLat, refLng, p.lat, p.lng);
     const popupContent = `
@@ -272,51 +318,177 @@ function agregarPuntos(refLat: number, refLng: number) {
         <span style="color:#1a73e8;font-size:11px;cursor:pointer">Toca para trazar ruta 🗺️</span>
       </div>
     `;
-
     const marker = L.marker([p.lat, p.lng], { icon: iconosPorTipo[p.tipo] })
-      .addTo(map)
-      .bindPopup(popupContent);
-
+      .addTo(map).bindPopup(popupContent);
     marker.on('click', () => trazarRuta(p.lat, p.lng, p.nombre));
   });
+}
+
+// ── Agregar sitios personalizados al mapa ──────────────
+
+function agregarSitioAlMapa(sitio: SitioPersonalizado) {
+  const icono = iconosPorTipo[sitio.tipo] || crearIcono('marker.svg');
+  const etiqueta = etiquetasTipo[sitio.tipo] || sitio.tipo;
+  const tieneFotos = sitio.fotos.length > 0;
+  const fotoPreview = tieneFotos
+    ? `<img src="${sitio.fotos[0]}" style="width:100%;height:80px;object-fit:cover;border-radius:6px;margin-top:6px;cursor:pointer" />`
+    : '';
+
+  const popupContent = `
+    <div style="min-width:200px;font-family:sans-serif" class="popup-personalizado">
+      <strong style="font-size:14px">${sitio.nombre}</strong>
+      <span style="display:inline-block;background:#e91e63;color:white;font-size:9px;padding:1px 6px;border-radius:8px;margin-left:6px">Nuevo</span><br>
+      <span style="color:#666;font-size:12px">${etiqueta}</span><br>
+      ${sitio.descripcion ? `<em style="font-size:11px;color:#888">${sitio.descripcion}</em><br>` : ''}
+      ${fotoPreview}
+      ${tieneFotos ? `<div style="color:#1a73e8;font-size:11px;margin-top:4px;cursor:pointer">📸 Ver ${sitio.fotos.length} foto${sitio.fotos.length > 1 ? 's' : ''}</div>` : ''}
+      <div style="margin-top:6px;display:flex;gap:8px">
+        <span style="color:#e91e63;font-size:11px;cursor:pointer" id="btn-ruta-${sitio.id}">🗺️ Ruta</span>
+        <span style="color:#ff4444;font-size:11px;cursor:pointer" id="btn-eliminar-${sitio.id}">🗑️ Eliminar</span>
+      </div>
+    </div>
+  `;
+
+  const marker = L.marker([sitio.lat, sitio.lng], { icon: icono }).addTo(map);
+  marker.bindPopup(popupContent);
+
+  marker.on('popupopen', () => {
+    // Botón ver fotos
+    const popup = marker.getPopup()?.getElement();
+    if (popup && tieneFotos) {
+      const img = popup.querySelector('img');
+      const verFotos = popup.querySelector(`[style*="📸"]`);
+      const abrirGaleria = () => {
+        galeriaData.nombre = sitio.nombre;
+        galeriaData.descripcion = sitio.descripcion;
+        galeriaData.tipo = sitio.tipo;
+        galeriaData.fotos = [...sitio.fotos];
+        mostrarGaleria.value = true;
+      };
+      img?.addEventListener('click', abrirGaleria);
+      verFotos?.addEventListener('click', abrirGaleria);
+    }
+
+    // Botón ruta
+    const btnRuta = document.getElementById(`btn-ruta-${sitio.id}`);
+    btnRuta?.addEventListener('click', () => trazarRuta(sitio.lat, sitio.lng, sitio.nombre));
+
+    // Botón eliminar
+    const btnEliminar = document.getElementById(`btn-eliminar-${sitio.id}`);
+    btnEliminar?.addEventListener('click', () => eliminarSitio(sitio.id, marker));
+  });
+
+  marcadoresPersonalizados.push(marker);
+}
+
+async function eliminarSitio(id: string, marker: L.Marker) {
+  map.removeLayer(marker);
+  sitiosPersonalizados.value = sitiosPersonalizados.value.filter(s => s.id !== id);
+  await guardarSitiosEnStorage();
+}
+
+// ── Modo Agregar Sitio ─────────────────────────────────
+
+function activarModoAgregar() {
+  modoAgregar.value = !modoAgregar.value;
+  if (!modoAgregar.value) {
+    puntoTemporal.value = null;
+    if (marcadorTemporal) {
+      map.removeLayer(marcadorTemporal);
+      marcadorTemporal = undefined;
+    }
+  }
+}
+
+function onMapClick(e: L.LeafletMouseEvent) {
+  if (!modoAgregar.value) return;
+
+  puntoTemporal.value = { lat: e.latlng.lat, lng: e.latlng.lng };
+
+  if (marcadorTemporal) {
+    marcadorTemporal.setLatLng(e.latlng);
+  } else {
+    const iconoTemp = L.divIcon({
+      html: '<div style="width:20px;height:20px;background:#e91e63;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4);animation:pulse 1.5s infinite"></div>',
+      iconSize: [20, 20],
+      iconAnchor: [10, 10],
+      className: '',
+    });
+    marcadorTemporal = L.marker(e.latlng, { icon: iconoTemp }).addTo(map);
+  }
+}
+
+function abrirFormulario() {
+  mostrarModalAgregar.value = true;
+}
+
+function cerrarModalAgregar() {
+  mostrarModalAgregar.value = false;
+}
+
+async function guardarNuevoSitio(data: {
+  nombre: string; descripcion: string; tipo: string;
+  lat: number; lng: number; fotos: string[];
+}) {
+  const nuevoSitio: SitioPersonalizado = {
+    id: Date.now().toString(),
+    nombre: data.nombre,
+    tipo: data.tipo,
+    descripcion: data.descripcion,
+    lat: data.lat,
+    lng: data.lng,
+    fotos: data.fotos,
+    fechaCreacion: new Date().toISOString(),
+  };
+
+  sitiosPersonalizados.value.push(nuevoSitio);
+  await guardarSitiosEnStorage();
+  agregarSitioAlMapa(nuevoSitio);
+
+  // Limpiar modo agregar
+  modoAgregar.value = false;
+  puntoTemporal.value = null;
+  if (marcadorTemporal) {
+    map.removeLayer(marcadorTemporal);
+    marcadorTemporal = undefined;
+  }
 }
 
 // ── Inicializar mapa ───────────────────────────────────
 
 async function inicializarMapa() {
-  let lat = 4.6097;
-  let lng = -74.0817;
+  let lat = 4.6097, lng = -74.0817;
   let accuracy: number | undefined;
 
   try {
-    const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
-    lat = position.coords.latitude;
-    lng = position.coords.longitude;
-    accuracy = position.coords.accuracy ?? undefined;
+    const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
+    lat = pos.coords.latitude;
+    lng = pos.coords.longitude;
+    accuracy = pos.coords.accuracy ?? undefined;
   } catch (err) {
-    console.warn('Geolocalización no disponible, usando Bogotá por defecto:', err);
+    console.warn('Geolocalización no disponible, usando Bogotá:', err);
   }
 
   ubicacionUsuario.value = { lat, lng };
 
-  map = L.map('map', {
-    zoomControl: true,
-  }).setView([lat, lng], 14);
+  map = L.map('map', { zoomControl: true }).setView([lat, lng], 14);
 
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     maxZoom: 19,
   }).addTo(map);
 
-  // Marcador y círculo de precisión del usuario
   actualizarPosicionUsuario(lat, lng, accuracy);
+  agregarPuntosPredeterminados(lat, lng);
 
-  // Puntos de interés
-  agregarPuntos(lat, lng);
+  // Cargar sitios guardados
+  await cargarSitiosGuardados();
+  sitiosPersonalizados.value.forEach(s => agregarSitioAlMapa(s));
 
-  // Iniciar seguimiento en tiempo real
+  // Evento click del mapa para modo agregar
+  map.on('click', onMapClick);
+
   iniciarSeguimiento();
-
   setTimeout(() => map.invalidateSize(), 200);
 }
 
@@ -338,5 +510,66 @@ onMounted(() => {
 #map {
   width: 100%;
   height: 100%;
+}
+
+.modo-agregar-banner {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #e91e63, #ff5722);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1000;
+  box-shadow: 0 4px 16px rgba(233, 30, 99, 0.4);
+  animation: slideDown 0.3s ease-out;
+  white-space: nowrap;
+}
+
+.confirmar-punto-banner {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1a2e;
+  color: #e0e0e0;
+  padding: 10px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 1000;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(0, 210, 255, 0.2);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.7; }
+}
+</style>
+
+<style>
+/* Estilos globales para la animación del marcador temporal */
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.7; }
 }
 </style>
