@@ -33,9 +33,11 @@ import '@ionic/vue/css/palettes/dark.system.css';
 
 /* Theme variables */
 import './theme/variables.css';
+import 'leaflet/dist/leaflet.css';
+import './theme/map.css';
 
 const app = createApp(App)
-  .use(IonicVue)
+  .use(IonicVue, { mode: 'ios' })
   .use(router);
 
 router.isReady().then(() => {
