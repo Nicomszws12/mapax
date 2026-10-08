@@ -1,158 +1,230 @@
 <template>
   <ion-page>
-    <ion-header class="ion-no-border">
-      <ion-toolbar class="ios-settings-toolbar">
+    <ion-header class="ion-no-border header-credits">
+      <ion-toolbar class="toolbar-credits">
         <ion-buttons slot="start">
-          <ion-back-button default-href="/home" text="Atrás" class="ios-back-btn" />
+          <ion-back-button default-href="/home" text="" class="btn-back-credits" />
         </ion-buttons>
-        <ion-title class="ios-settings-title">Información</ion-title>
+        <ion-title class="title-credits">Información y Créditos</ion-title>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content :fullscreen="true" class="ios-settings-bg">
-      <div class="ios-settings-container">
-        <!-- Tarjeta Hero de la App -->
-        <div class="ios-app-hero">
-          <div class="ios-app-icon-wrap">
-            <div class="ios-app-icon">
-              <ion-icon :icon="map" />
+    <ion-content :fullscreen="true" class="content-credits">
+      <div class="credits-container">
+        <!-- Tarjeta Hero de la App (Figma Navigation Kit Style) -->
+        <div class="app-hero-card">
+          <div class="hero-icon-wrap">
+            <div class="hero-icon">
+              <img src="/assets/logoMapx.png" alt="Logo MapX Bogotá" class="hero-logo-img" />
             </div>
           </div>
-          <h1 class="ios-hero-title">MapX Bogotá</h1>
-          <p class="ios-hero-subtitle">Explorador Urbano & Navegación</p>
-          <span class="ios-hero-badge">Versión 1.0.0</span>
+          <h1 class="hero-title">MapX Bogotá</h1>
+          <p class="hero-subtitle">Navegación Urbana & Puntos de Interés</p>
+          <div class="hero-badge-wrap">
+            <span class="hero-badge">Versión 1.0.0 · Edición Multiplataforma</span>
+          </div>
         </div>
 
-        <!-- Grupo: Autoría y Créditos -->
-        <div class="ios-group-label">AUTORÍA Y DESARROLLO</div>
-        <div class="ios-grouped-card">
-          <div class="ios-cell">
-            <div class="ios-cell-icon" style="background: #007aff">
+        <!-- Grupo: Autoría y Desarrollo -->
+        <div class="group-header">
+          <span class="group-title">Autoría y Desarrollo</span>
+        </div>
+        <div class="card-section">
+          <div class="cell-row">
+            <div class="cell-glyph" style="background: var(--ion-color-primary)">
               <ion-icon :icon="person" />
             </div>
-            <div class="ios-cell-body">
-              <span class="ios-cell-title">Desarrollado por</span>
-              <span class="ios-cell-value author-highlight">Nicolás Nieto</span>
+            <div class="cell-content">
+              <span class="cell-label">Desarrollado por</span>
+              <span class="cell-value author-name">Nicolás Nieto</span>
             </div>
           </div>
 
-          <div class="ios-cell-divider"></div>
+          <div class="cell-divider"></div>
 
-          <div class="ios-cell">
-            <div class="ios-cell-icon" style="background: #5856d6">
+          <div class="cell-row">
+            <div class="cell-glyph" style="background: #6366f1">
               <ion-icon :icon="sparkles" />
             </div>
-            <div class="ios-cell-body">
-              <span class="ios-cell-title">Edición</span>
-              <span class="ios-cell-value">iOS Pro Design</span>
+            <div class="cell-content">
+              <span class="cell-label">Diseño</span>
+              <span class="cell-value">Universal Mobile UI Kit</span>
             </div>
           </div>
         </div>
 
-        <!-- Grupo: Funcionalidades del Sistema -->
-        <div class="ios-group-label">CAPACIDADES DEL MAPA</div>
-        <div class="ios-grouped-card">
-          <div class="ios-cell">
-            <div class="ios-cell-icon" style="background: #ff9500">
+        <!-- Grupo: Capacidades del Sistema -->
+        <div class="group-header">
+          <span class="group-title">Capacidades del Mapa</span>
+        </div>
+        <div class="card-section">
+          <div class="cell-row">
+            <div class="cell-glyph" style="background: #f59e0b">
               <ion-icon :icon="location" />
             </div>
-            <div class="ios-cell-body">
-              <span class="ios-cell-title">Puntos de Interés</span>
-              <span class="ios-cell-value">22 predefinidos</span>
+            <div class="cell-content">
+              <span class="cell-label">Puntos de Interés</span>
+              <span class="cell-value">22 predefinidos</span>
             </div>
           </div>
 
-          <div class="ios-cell-divider"></div>
+          <div class="cell-divider"></div>
 
-          <div class="ios-cell">
-            <div class="ios-cell-icon" style="background: #34c759">
+          <div class="cell-row">
+            <div class="cell-glyph" style="background: #10b981">
               <ion-icon :icon="navigate" />
             </div>
-            <div class="ios-cell-body">
-              <span class="ios-cell-title">Rastreo GPS</span>
-              <span class="ios-cell-value">Tiempo real</span>
+            <div class="cell-content">
+              <span class="cell-label">Rastreo GPS</span>
+              <span class="cell-value">Tiempo real</span>
             </div>
           </div>
 
-          <div class="ios-cell-divider"></div>
+          <div class="cell-divider"></div>
 
-          <div class="ios-cell">
-            <div class="ios-cell-icon" style="background: #00c7be">
+          <div class="cell-row">
+            <div class="cell-glyph" style="background: #06b6d4">
               <ion-icon :icon="walk" />
             </div>
-            <div class="ios-cell-body">
-              <span class="ios-cell-title">Rutas Peatonales</span>
-              <span class="ios-cell-value">OSRM Routing</span>
+            <div class="cell-content">
+              <span class="cell-label">Rutas Peatonales</span>
+              <span class="cell-value">OSRM Routing</span>
             </div>
           </div>
 
-          <div class="ios-cell-divider"></div>
+          <div class="cell-divider"></div>
 
-          <div class="ios-cell">
-            <div class="ios-cell-icon" style="background: #ff2d55">
+          <div class="cell-row">
+            <div class="cell-glyph" style="background: #ec4899">
               <ion-icon :icon="camera" />
             </div>
-            <div class="ios-cell-body">
-              <span class="ios-cell-title">Registro Multimedia</span>
-              <span class="ios-cell-value">Cámara y Fototeca</span>
+            <div class="cell-content">
+              <span class="cell-label">Registro Multimedia</span>
+              <span class="cell-value">Cámara y Galería</span>
             </div>
           </div>
 
-          <div class="ios-cell-divider"></div>
+          <div class="cell-divider"></div>
 
-          <div class="ios-cell">
-            <div class="ios-cell-icon" style="background: #af52de">
+          <div class="cell-row">
+            <div class="cell-glyph" style="background: #8b5cf6">
               <ion-icon :icon="layers" />
             </div>
-            <div class="ios-cell-body">
-              <span class="ios-cell-title">Capas Cartográficas</span>
-              <span class="ios-cell-value">4 estilos disponibles</span>
+            <div class="cell-content">
+              <span class="cell-label">Capas Cartográficas</span>
+              <span class="cell-value">OSM & Esri ArcGIS</span>
             </div>
           </div>
         </div>
 
-        <!-- Grupo: Arquitectura y Tecnologías -->
-        <div class="ios-group-label">TECNOLOGÍA</div>
-        <div class="ios-grouped-card">
-          <div class="ios-cell">
-            <div class="ios-cell-icon" style="background: #32ade6">
+        <!-- Grupo: Tecnologías -->
+        <div class="group-header">
+          <span class="group-title">Tecnología</span>
+        </div>
+        <div class="card-section">
+          <div class="cell-row">
+            <div class="cell-glyph" style="background: #0284c7">
               <ion-icon :icon="codeSlash" />
             </div>
-            <div class="ios-cell-body">
-              <span class="ios-cell-title">Framework</span>
-              <span class="ios-cell-value">Ionic 9 · Vue 3</span>
+            <div class="cell-content">
+              <span class="cell-label">Framework</span>
+              <span class="cell-value">Ionic 9 · Vue 3</span>
             </div>
           </div>
 
-          <div class="ios-cell-divider"></div>
+          <div class="cell-divider"></div>
 
-          <div class="ios-cell">
-            <div class="ios-cell-icon" style="background: #30d158">
+          <div class="cell-row">
+            <div class="cell-glyph" style="background: #059669">
               <ion-icon :icon="mapOutline" />
             </div>
-            <div class="ios-cell-body">
-              <span class="ios-cell-title">Motor de Mapas</span>
-              <span class="ios-cell-value">Leaflet · CARTO · OSM</span>
+            <div class="cell-content">
+              <span class="cell-label">Motor de Mapas</span>
+              <span class="cell-value">Leaflet · Esri · OSM</span>
             </div>
           </div>
 
-          <div class="ios-cell-divider"></div>
+          <div class="cell-divider"></div>
 
-          <div class="ios-cell">
-            <div class="ios-cell-icon" style="background: #007aff">
+          <div class="cell-row">
+            <div class="cell-glyph" style="background: var(--ion-color-primary)">
               <ion-icon :icon="phonePortrait" />
             </div>
-            <div class="ios-cell-body">
-              <span class="ios-cell-title">Plataforma Nativa</span>
-              <span class="ios-cell-value">Capacitor 8</span>
+            <div class="cell-content">
+              <span class="cell-label">Plataforma Nativa</span>
+              <span class="cell-value">Capacitor 8</span>
             </div>
           </div>
         </div>
 
-        <!-- Pie de página legal estilo iOS -->
-        <div class="ios-footer-legal">
+        <!-- Grupo: Derechos de Autor y Atribución Cartográfica -->
+        <div class="group-header">
+          <span class="group-title">Derechos de Autor y Atribución</span>
+        </div>
+        <div class="card-section">
+          <div class="cell-row">
+            <div class="cell-glyph" style="background: #10b981">
+              <ion-icon :icon="globeOutline" />
+            </div>
+            <div class="cell-content-col">
+              <div class="cell-row-header">
+                <span class="cell-label">OpenStreetMap</span>
+                <span class="cell-tag">ODbL</span>
+              </div>
+              <span class="cell-subdesc">© Colaboradores de OpenStreetMap · Datos cartográficos libres y abiertos</span>
+            </div>
+          </div>
+
+          <div class="cell-divider"></div>
+
+          <div class="cell-row">
+            <div class="cell-glyph" style="background: #0284c7">
+              <ion-icon :icon="earthOutline" />
+            </div>
+            <div class="cell-content-col">
+              <div class="cell-row-header">
+                <span class="cell-label">Esri ArcGIS</span>
+                <span class="cell-tag">GIS</span>
+              </div>
+              <span class="cell-subdesc">© Esri, Maxar, Earthstar Geographics, USGS · Capas satelitales y minimal</span>
+            </div>
+          </div>
+
+          <div class="cell-divider"></div>
+
+          <div class="cell-row">
+            <div class="cell-glyph" style="background: #e11d48">
+              <ion-icon :icon="navigateOutline" />
+            </div>
+            <div class="cell-content-col">
+              <div class="cell-row-header">
+                <span class="cell-label">TomTom</span>
+                <span class="cell-tag">Routing & Search</span>
+              </div>
+              <span class="cell-subdesc">© TomTom NV · Geocodificación y cálculo de rutas con tráfico en tiempo real</span>
+            </div>
+          </div>
+
+          <div class="cell-divider"></div>
+
+          <div class="cell-row">
+            <div class="cell-glyph" style="background: #8b5cf6">
+              <ion-icon :icon="shieldCheckmarkOutline" />
+            </div>
+            <div class="cell-content-col">
+              <div class="cell-row-header">
+                <span class="cell-label">Leaflet</span>
+                <span class="cell-tag">BSD-2</span>
+              </div>
+              <span class="cell-subdesc">© Volodymyr Agafonkin · Motor de mapas web interactivo</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-legal">
           <p>© 2026 Nicolás Nieto</p>
-          <p>Bogotá D.C., Colombia · Todos los derechos reservados</p>
+          <p>Bogotá D.C., Colombia · Navegación Móvil Multiplataforma</p>
         </div>
       </div>
     </ion-content>
@@ -166,165 +238,219 @@ import {
 } from '@ionic/vue';
 import {
   map, person, sparkles, location, navigate, walk, camera,
-  layers, codeSlash, mapOutline, phonePortrait
+  layers, codeSlash, mapOutline, phonePortrait,
+  globeOutline, earthOutline, navigateOutline, shieldCheckmarkOutline
 } from 'ionicons/icons';
 </script>
 
 <style scoped>
-.ios-settings-toolbar {
+.header-credits {
+  border-bottom: 1px solid var(--mx-border);
+}
+
+.toolbar-credits {
   --background: var(--mx-surface);
+  --color: var(--mx-text);
   --border-width: 0;
-  border-bottom: 0.5px solid var(--mx-separator);
 }
 
-.ios-back-btn {
-  --color: var(--mx-blue);
-  font-size: 17px;
+.btn-back-credits {
+  --color: var(--mx-text);
 }
 
-.ios-settings-title {
+.title-credits {
   font-size: 17px;
   font-weight: 600;
   color: var(--mx-text);
-  letter-spacing: -0.2px;
 }
 
-.ios-settings-bg {
+.content-credits {
   --background: var(--mx-bg);
 }
 
-.ios-settings-container {
-  max-width: 580px;
+.credits-container {
+  max-width: 600px;
   margin: 0 auto;
-  padding: 24px 16px 48px;
+  padding: 20px 16px 40px;
 }
 
-/* App Hero */
-.ios-app-hero {
+/* App Hero Card */
+.app-hero-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  margin-bottom: 28px;
+  padding: 24px 16px;
+  margin-bottom: 24px;
+  background: var(--mx-surface);
+  border: 1px solid var(--mx-border);
+  border-radius: var(--mx-radius, 12px);
+  box-shadow: var(--mx-shadow-sm);
 }
 
-.ios-app-icon-wrap {
-  margin-bottom: 14px;
+.hero-icon-wrap {
+  margin-bottom: 12px;
 }
 
-.ios-app-icon {
+.hero-icon {
   width: 76px;
   height: 76px;
   border-radius: 18px;
-  background: linear-gradient(135deg, #007aff 0%, #0051ba 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  font-size: 40px;
-  box-shadow: 0 10px 24px rgba(0, 122, 255, 0.3), 0 2px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
+  border: 1px solid var(--mx-border);
 }
 
-.ios-hero-title {
-  font-size: 24px;
+.hero-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.hero-title {
+  font-size: 22px;
   font-weight: 700;
-  letter-spacing: -0.4px;
   color: var(--mx-text);
   margin: 0 0 4px;
+  letter-spacing: -0.3px;
 }
 
-.ios-hero-subtitle {
-  font-size: 15px;
+.hero-subtitle {
+  font-size: 14px;
   color: var(--mx-text-2);
-  margin: 0 0 10px;
+  margin: 0 0 12px;
 }
 
-.ios-hero-badge {
+.hero-badge-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.hero-badge {
   display: inline-block;
-  padding: 3px 10px;
-  border-radius: 12px;
+  padding: 4px 12px;
+  border-radius: 20px;
   background: var(--mx-fill);
+  border: 1px solid var(--mx-border-subtle);
   color: var(--mx-text-2);
   font-size: 12px;
   font-weight: 500;
 }
 
-/* Grouped List */
-.ios-group-label {
+/* Group Headers & Cards */
+.group-header {
+  margin: 16px 4px 8px;
+}
+
+.group-title {
   font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.5px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
   color: var(--mx-text-2);
-  margin: 22px 14px 7px;
   text-transform: uppercase;
 }
 
-.ios-grouped-card {
+.card-section {
   background: var(--mx-surface);
-  border-radius: 14px;
+  border: 1px solid var(--mx-border);
+  border-radius: var(--mx-radius, 12px);
+  box-shadow: var(--mx-shadow-sm);
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.ios-cell {
+.cell-row {
   display: flex;
   align-items: center;
-  padding: 12px 16px;
-  gap: 14px;
+  padding: 12px 14px;
+  gap: 12px;
 }
 
-.ios-cell-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 7px;
+.cell-glyph {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  font-size: 17px;
+  font-size: 18px;
   flex-shrink: 0;
+  box-shadow: var(--mx-shadow-sm);
 }
 
-.ios-cell-body {
+.cell-content {
   flex: 1;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.ios-cell-title {
-  font-size: 16px;
-  color: var(--mx-text);
-  font-weight: 400;
-}
-
-.ios-cell-value {
+.cell-label {
   font-size: 15px;
-  color: var(--mx-text-2);
-  font-weight: 400;
+  color: var(--mx-text);
+  font-weight: 500;
 }
 
-.author-highlight {
-  color: var(--mx-blue);
+.cell-value {
+  font-size: 14px;
+  color: var(--mx-text-2);
+  font-weight: 500;
+}
+
+.author-name {
+  color: var(--ion-color-primary);
   font-weight: 600;
 }
 
-.ios-cell-divider {
-  height: 0.5px;
-  background: var(--mx-separator);
-  margin-left: 60px;
+.cell-content-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cell-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cell-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--mx-text-2);
+  background: var(--mx-fill);
+  padding: 2px 7px;
+  border-radius: 6px;
+  border: 1px solid var(--mx-border-subtle);
+}
+
+.cell-subdesc {
+  font-size: 12px;
+  color: var(--mx-text-2);
+  line-height: 1.35;
+}
+
+.cell-divider {
+  height: 1px;
+  background: var(--mx-border-subtle);
+  margin-left: 58px;
 }
 
 /* Footer Legal */
-.ios-footer-legal {
-  margin-top: 36px;
+.footer-legal {
+  margin-top: 32px;
   text-align: center;
   color: var(--mx-text-3);
   font-size: 12px;
   line-height: 1.5;
 }
 
-.ios-footer-legal p {
+.footer-legal p {
   margin: 0;
 }
 </style>

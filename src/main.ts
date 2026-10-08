@@ -37,7 +37,7 @@ import 'leaflet/dist/leaflet.css';
 import './theme/map.css';
 
 const app = createApp(App)
-  .use(IonicVue, { mode: 'ios' })
+  .use(IonicVue)
   .use(router);
 
 router.isReady().then(() => {
